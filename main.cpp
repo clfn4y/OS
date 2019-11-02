@@ -300,146 +300,176 @@ int main()
 	      break;
 	   	case e_mkdir:
 	   	{
-	   		// Checks if folder already exist
-				bool match = false;
-				for (auto const& i : current_directory->contents.first) {
-			    if (i.folder_name == action_1)
-						match = true;
-			  }
-			  for (auto const& i : current_directory->contents.second) {
-			    if (i.file_name == action_1)
-						match = true;
-			  }
+	   		if (action_1 != "")
+	   		{
+	   			// Checks if folder already exist
+					bool match = false;
+					for (auto const& i : current_directory->contents.first) {
+				    if (i.folder_name == action_1)
+							match = true;
+				  }
+				  for (auto const& i : current_directory->contents.second) {
+				    if (i.file_name == action_1)
+							match = true;
+				  }
 
-				if (!match)
-				{
-					Folders create_folder;
-					create_folder.folder_name = action_1;
-					create_folder.access = "111000000";
-					create_folder.timestamp = currentDateTime();
+					if (!match)
+					{
+						Folders create_folder;
+						create_folder.folder_name = action_1;
+						create_folder.access = "111000000";
+						create_folder.timestamp = currentDateTime();
 
-					current_directory->contents.first.push_back(create_folder);
-				}
-				else
-					cout << RED << "ALREADY EXIST" << RESET << endl;
+						current_directory->contents.first.push_back(create_folder);
+					}
+					else
+						cout << RED << "ALREADY EXIST" << RESET << endl;
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+	   		
 	      break;
 	   	}
 	    case e_rmdir:
 	    {
-	    	bool match = false;
-	    	list<Folders>::iterator it = current_directory->contents.first.begin();
-				while (it != current_directory->contents.first.end()) {
-					if (it->folder_name == action_1) 
-					{
-						it = current_directory->contents.first.erase(it);
-						match = true;
+	    	if (action_1 != "")
+	   		{
+	   			bool match = false;
+		    	list<Folders>::iterator it = current_directory->contents.first.begin();
+					while (it != current_directory->contents.first.end()) {
+						if (it->folder_name == action_1) 
+						{
+							it = current_directory->contents.first.erase(it);
+							match = true;
+						}
+						else
+							it++;
 					}
-					else
-						it++;
-				}
-				if (!match)
-					cout << RED << "DOES NOT EXIST" << RESET << endl;
+					if (!match)
+						cout << RED << "DOES NOT EXIST" << RESET << endl;
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
 			 
 	      break;
 	    }
       case e_rm:
       {
-      	bool match = false;
-      	list<Files>::iterator it = current_directory->contents.second.begin();
-				while (it != current_directory->contents.second.end()) {
-					if (it->file_name == action_1) 
-					{
-						it = current_directory->contents.second.erase(it);
-						match = true;
+      	if (action_1 != "")
+	   		{
+	   			bool match = false;
+	      	list<Files>::iterator it = current_directory->contents.second.begin();
+					while (it != current_directory->contents.second.end()) {
+						if (it->file_name == action_1) 
+						{
+							it = current_directory->contents.second.erase(it);
+							match = true;
+						}
+						else
+							it++;
 					}
-					else
-						it++;
-				}
-				if (!match)
-					cout << RED << "DOES NOT EXIST" << RESET << endl;
+					if (!match)
+						cout << RED << "DOES NOT EXIST" << RESET << endl;
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
 
 	      break;
       }
 	    case e_chmod:
 	    {
-	    	string temp = "";
-	    	bool fail = false;
-	    	bool found = false;
-	    	if (action_1.length() == 3)
-	    	{
-	    		for (int i = 0; i < action_1.length(); i++)
+	    	if (action_1 != "")
+	   		{
+	   			string temp = "";
+		    	bool fail = false;
+		    	bool found = false;
+		    	if (action_1.length() == 3)
 		    	{
+		    		for (int i = 0; i < action_1.length(); i++)
+			    	{
 
-		    		string num_char = "";
-		    		num_char += action_1[i]; 
-		    		stringstream converter(num_char); 
-				    int num = 0; 
-				    converter >> num; 
+			    		string num_char = "";
+			    		num_char += action_1[i]; 
+			    		stringstream converter(num_char); 
+					    int num = 0; 
+					    converter >> num; 
 
-				    if (num <= 7)
-				    {
-				    	temp += bitset<3>(action_1.c_str()[i]).to_string();
-				    }
-				    else
-				    {
-				    	cout << RED << "NOT VALID NUMBER" << RESET << endl; 
-				    	fail = true;
-				    }
+					    if (num <= 7)
+					    {
+					    	temp += bitset<3>(action_1.c_str()[i]).to_string();
+					    }
+					    else
+					    {
+					    	cout << RED << "NOT VALID NUMBER" << RESET << endl; 
+					    	fail = true;
+					    }
 
-				 
+					 
+			    	}
+			    	if (!fail)
+			    	{
+			    		for (auto & i : current_directory->contents.first) {
+					    	if (i.folder_name == action_2)
+					    	{
+					    		i.access = temp;
+					    		found = true;
+					    	}
+						  }
+
+						  for (auto & i : current_directory->contents.second) {
+						    if (i.file_name == action_2)
+					    	{
+					    		i.access = temp;
+					    		found = true;
+					    	}
+						  }
+						  if (!found)
+						  	cout << RED << "NOT VALID NAME" << RESET << endl; 
+			    	}
 		    	}
-		    	if (!fail)
-		    	{
-		    		for (auto & i : current_directory->contents.first) {
-				    	if (i.folder_name == action_2)
-				    	{
-				    		i.access = temp;
-				    		found = true;
-				    	}
-					  }
+		    	else
+		    		cout << RED << "NOT VALID NUMBER" << RESET << endl;
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
 
-					  for (auto & i : current_directory->contents.second) {
-					    if (i.file_name == action_2)
-				    	{
-				    		i.access = temp;
-				    		found = true;
-				    	}
-					  }
-					  if (!found)
-					  	cout << RED << "NOT VALID NAME" << RESET << endl; 
-		    	}
-	    	}
-	    	else
-	    		cout << RED << "NOT VALID NUMBER" << RESET << endl;
+
+	    	
 
 	      break;
 	    }
 	    case e_touch:
 	    {
-				bool match = false;
-				for (auto & i : current_directory->contents.second) {
-			    if (i.file_name == action_1)
-			    {
-						match = true;
-						i.timestamp  = currentDateTime();
-			    }
-			  }
-			  for (auto & i : current_directory->contents.first) {
-			    if (i.folder_name == action_1)
-			    {
-						match = true;
-						i.timestamp  = currentDateTime();
-			    }
-			  }
-				if (!match)
-				{
-					Files create_file;
-					create_file.file_name = action_1;
-					create_file.access = "111000000";
-					create_file.timestamp = currentDateTime();
+	    	if (action_1 != "")
+	   		{
+	   			bool match = false;
+					for (auto & i : current_directory->contents.second) {
+				    if (i.file_name == action_1)
+				    {
+							match = true;
+							i.timestamp  = currentDateTime();
+				    }
+				  }
+				  for (auto & i : current_directory->contents.first) {
+				    if (i.folder_name == action_1)
+				    {
+							match = true;
+							i.timestamp  = currentDateTime();
+				    }
+				  }
+					if (!match)
+					{
+						Files create_file;
+						create_file.file_name = action_1;
+						create_file.access = "111000000";
+						create_file.timestamp = currentDateTime();
 
-					current_directory->contents.second.push_back(create_file);
-				}
+						current_directory->contents.second.push_back(create_file);
+					}
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
 	      break;
 	    }
 	    case e_empty:
