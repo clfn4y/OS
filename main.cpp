@@ -55,8 +55,28 @@ struct Folders
 	Folders &operator = (const Folders &folder);
 };
 
+// Users and groups
+struct Groups
+{
+	string group_name;
+};
+
+struct Users
+{
+	string user_name;
+	vector<Groups> user_groups;
+
+	Users* get_user() {return this;}
+	Users &operator = (const Users &user);
+};
+
+
 // overload = 
 Folders &Folders::operator = (const Folders &folder)
+{
+	return *this;
+}
+Users &Users::operator = (const Users &user)
 {
 	return *this;
 }
@@ -94,7 +114,19 @@ enum enum_command {
 	e_touch,
 	e_exit,
 	e_empty,
-	e_none    
+
+	e_useradd,
+	e_chuser,
+	e_groupadd,
+	e_usermod,
+	e_chown,
+	e_chgrp,
+	e_userdel,
+	e_groupdel,
+	e_groups,
+	e_users,
+
+	e_none
 };
 
 // convert string input to enum
@@ -109,6 +141,18 @@ enum_command hashit (string const& inString) {
     if (inString == "touch") return e_touch;
     if (inString == "exit" || inString == "quit") return e_exit;
     if (inString == "") return e_empty;
+
+    if (inString == "useradd") return e_useradd;
+    if (inString == "chuser") return e_chuser;
+    if (inString == "groupadd") return e_groupadd;
+    if (inString == "usermod") return e_usermod;
+    if (inString == "chown") return e_chown;
+    if (inString == "chgrp") return e_chgrp;
+    if (inString == "userdel") return e_userdel;
+    if (inString == "groupdel") return e_groupdel;
+    if (inString == "groups") return e_groups;
+    if (inString == "users") return e_users;
+
     return e_none;
 }
 
@@ -139,6 +183,18 @@ int main()
 	ROOT.access = "111000000";
 	ROOT.timestamp = currentDateTime();
 
+	// Create initial user and group 
+	Users ROOT_USER;
+	Groups USERS;
+	ROOT_USER.user_name = "ROOT_USER";
+	USERS.group_name = "USERS";
+	ROOT_USER.user_groups.push_back(USERS);
+
+	vector<Users> users_list;
+	users_list.push_back(ROOT_USER);
+
+	Users* active_user = ROOT_USER.get_user();
+
 	// Variables
 	string path = "";
 	string command = "";
@@ -154,6 +210,13 @@ int main()
 	// Shell loop
 	while(running)
 	{
+		// cout << ROOT_USER.user_name << endl;
+		// for (auto & i : ROOT_USER.user_groups)
+		// {
+		// 	cout << i.group_name << endl;
+		// }
+
+
 		// Location and getting input
 		path = path_func(current_directory);
 		cout << path;
@@ -433,9 +496,6 @@ int main()
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
 
-
-	    	
-
 	      break;
 	    }
 	    case e_touch:
@@ -472,6 +532,144 @@ int main()
 
 	      break;
 	    }
+
+
+
+
+
+	    case e_useradd:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   			int flag = false;
+	   			for (auto & i : users_list)
+					{
+						if (i.user_name == action_1)
+							flag = true;
+					}
+
+	   			if (!flag)
+	   			{
+	   				Users new_user;
+	   				new_user.user_name = action_1;
+	   				new_user.user_groups.push_back(USERS);
+	   				users_list.push_back(new_user);
+	   			}
+	   			else
+	   				cout << RED << "USER ALREADY EXIST" << RESET << endl;
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	    	break;
+	    }
+
+	    case e_chuser:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   			int flag = false;
+	   			for (auto & i : users_list)
+					{
+						if (i.user_name == action_1)
+						{
+							flag = true;
+							active_user = i.get_user();
+						}
+					}
+
+	   			if (!flag)
+	   				cout << RED << "USER DOES NOT EXIST" << RESET << endl;
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	  	}
+
+	  	case e_groupadd:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	   	}
+
+	   	case e_usermod:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	   	}
+
+	   	case e_chown:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	   	}
+
+	   	case e_chgrp:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	   	}
+
+	   	case e_userdel:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	   	}
+
+	   	case e_groupdel:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	   	}
+
+	   	case e_groups:
+	    {
+	    	if (action_1 != "")
+	   		{
+	   		}
+	   		else
+	   			cout << RED << "NO ACTION" << RESET << endl;
+
+	   		break;
+	   	}
+
+	   	case e_users:
+	    {
+
+	   		break;
+	   	}
+
 	    case e_empty:
 	      break;
     }
