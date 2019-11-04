@@ -23,6 +23,8 @@ using namespace std;
 #include <ctime>
 #include <sstream> 
 #include <bitset>
+#include <string>
+#include <sstream>
 
 // Define colors for output
 #define RESET   "\033[0m"
@@ -192,6 +194,8 @@ int main()
 
 	vector<Users> users_list;
 	users_list.push_back(ROOT_USER);
+	vector<Groups> group_list;
+	group_list.push_back(USERS);
 
 	Users* active_user = ROOT_USER.get_user();
 
@@ -201,6 +205,9 @@ int main()
 	string input = "";
 	string action_1 = "";
 	string action_2 = "";
+	string action_3 = "";
+	string action_4 = "";
+	string action_5 = "";
 	int space = 0;
 	bool running = true; 
 	Folders* current_directory;
@@ -226,6 +233,9 @@ int main()
 		command = "";
 		action_1 = "";
 		action_2 = "";
+		action_3 = "";
+		action_4 = "";
+		action_5 = "";
 		for (int i = 0; i < input.length(); i++)
 		{
 			if (input[i] == ' ')
@@ -236,6 +246,12 @@ int main()
 				action_1 += input[i]; 
 			else if (input[i] != ' ' && space == 2)
 				action_2 += input[i];
+			else if (input[i] != ' ' && space == 3)
+				action_3 += input[i];
+			else if (input[i] != ' ' && space == 4)
+				action_4 += input[i];
+			else if (input[i] != ' ' && space == 5)
+				action_5 += input[i];
 		}
 
 		// Logic for input using the enums
@@ -541,22 +557,64 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
-	   			int flag = false;
-	   			for (auto & i : users_list)
-					{
-						if (i.user_name == action_1)
-							flag = true;
-					}
-
-	   			if (!flag)
+	   			if (action_1 == "-G")
 	   			{
-	   				Users new_user;
-	   				new_user.user_name = action_1;
-	   				new_user.user_groups.push_back(USERS);
-	   				users_list.push_back(new_user);
+	   				int flag = false;
+		   			for (auto & i : users_list)
+						{
+							if (i.user_name == action_3)
+								flag = true;
+						}
+
+		   			if (!flag)
+		   			{
+		   				// create user and add them to users group
+		   				Users new_user;
+		   				new_user.user_name = action_3;
+		   				new_user.user_groups.push_back(USERS);
+		   				users_list.push_back(new_user);
+
+		   				// Add it to the other groups
+							stringstream ss(action_2);
+							string group;
+							while (getline(ss,group, ','))
+							{
+								bool found = false;
+								for(auto & i : group_list)
+								{
+									if (i.group_name == group)
+									{
+										new_user.user_groups.push_back(i);
+										found = true;
+									}
+								}
+								if (!found)
+									cout << RED << "NOT AN ACTUAL GROUP: " << group << RESET << endl;
+							}
+
+		   			}
+		   			else
+		   				cout << RED << "USER ALREADY EXIST" << RESET << endl;
 	   			}
 	   			else
-	   				cout << RED << "USER ALREADY EXIST" << RESET << endl;
+	   			{
+	   				bool flag = false;
+		   			for (auto & i : users_list)
+						{
+							if (i.user_name == action_1)
+								flag = true;
+						}
+
+		   			if (!flag)
+		   			{
+		   				Users new_user;
+		   				new_user.user_name = action_1;
+		   				new_user.user_groups.push_back(USERS);
+		   				users_list.push_back(new_user);
+		   			}
+		   			else
+		   				cout << RED << "USER ALREADY EXIST" << RESET << endl;
+		   		}
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
@@ -568,7 +626,7 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
-	   			int flag = false;
+	   			bool flag = false;
 	   			for (auto & i : users_list)
 					{
 						if (i.user_name == action_1)
@@ -591,6 +649,23 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
+	   			bool flag = false;
+	   			for (auto & i : group_list)
+					{
+						if (i.group_name == action_1)
+							flag = true;
+					}
+
+	   			if (!flag)
+	   			{
+	   				Groups new_group;
+						new_group.group_name = action_1;
+						ROOT_USER.user_groups.push_back(new_group);
+
+						group_list.push_back(new_group);
+	   			}
+	   			else
+	   				cout << RED << "GROUP ALREADY EXIST" << RESET << endl;
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
@@ -657,6 +732,20 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
+	   			bool found = false;
+	   			for(auto & i : users_list)
+	   			{
+	   				if(i.user_name == action_1)
+	   				{
+	   					found = true;
+	   					for(auto & j : i.user_groups)
+	   						cout << GREEN << j.group_name << RESET << " ";
+	   					cout << endl;
+	   				}
+	   			}
+	   			if (!found)
+	   				cout << RED << "NO USER FOUND" << RESET << endl;
+
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
@@ -666,6 +755,9 @@ int main()
 
 	   	case e_users:
 	    {
+	    	for(auto & i: users_list)
+	    		cout << GREEN << i.user_name << " " << RESET;
+	    	cout << endl;
 
 	   		break;
 	   	}
