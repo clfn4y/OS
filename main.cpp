@@ -58,15 +58,10 @@ struct Folders
 };
 
 // Users and groups
-struct Groups
-{
-	string group_name;
-};
-
 struct Users
 {
 	string user_name;
-	vector<Groups> user_groups;
+	vector<string> user_groups;
 
 	Users* get_user() {return this;}
 	Users &operator = (const Users &user);
@@ -187,14 +182,13 @@ int main()
 
 	// Create initial user and group 
 	Users ROOT_USER;
-	Groups USERS;
+	string USERS = "USERS";
 	ROOT_USER.user_name = "ROOT_USER";
-	USERS.group_name = "USERS";
 	ROOT_USER.user_groups.push_back(USERS);
 
 	vector<Users> users_list;
 	users_list.push_back(ROOT_USER);
-	vector<Groups> group_list;
+	vector<string> group_list;
 	group_list.push_back(USERS);
 
 	Users* active_user = ROOT_USER.get_user();
@@ -217,13 +211,6 @@ int main()
 	// Shell loop
 	while(running)
 	{
-		// cout << ROOT_USER.user_name << endl;
-		// for (auto & i : ROOT_USER.user_groups)
-		// {
-		// 	cout << i.group_name << endl;
-		// }
-
-
 		// Location and getting input
 		path = path_func(current_directory);
 		cout << path;
@@ -572,7 +559,6 @@ int main()
 		   				Users new_user;
 		   				new_user.user_name = action_3;
 		   				new_user.user_groups.push_back(USERS);
-		   				users_list.push_back(new_user);
 
 		   				// Add it to the other groups
 							stringstream ss(action_2);
@@ -582,16 +568,16 @@ int main()
 								bool found = false;
 								for(auto & i : group_list)
 								{
-									if (i.group_name == group)
+									if (i == group)
 									{
-										new_user.user_groups.push_back(i);
+										new_user.user_groups.push_back(group);
 										found = true;
 									}
 								}
 								if (!found)
 									cout << RED << "NOT AN ACTUAL GROUP: " << group << RESET << endl;
 							}
-
+		   				users_list.push_back(new_user);
 		   			}
 		   			else
 		   				cout << RED << "USER ALREADY EXIST" << RESET << endl;
@@ -652,14 +638,13 @@ int main()
 	   			bool flag = false;
 	   			for (auto & i : group_list)
 					{
-						if (i.group_name == action_1)
+						if (i == action_1)
 							flag = true;
 					}
 
 	   			if (!flag)
 	   			{
-	   				Groups new_group;
-						new_group.group_name = action_1;
+	   				string new_group = action_1;
 						ROOT_USER.user_groups.push_back(new_group);
 
 						group_list.push_back(new_group);
@@ -739,7 +724,7 @@ int main()
 	   				{
 	   					found = true;
 	   					for(auto & j : i.user_groups)
-	   						cout << GREEN << j.group_name << RESET << " ";
+	   						cout << GREEN << j << RESET << " ";
 	   					cout << endl;
 	   				}
 	   			}
