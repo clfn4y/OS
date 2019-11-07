@@ -15,13 +15,13 @@
 #include<iostream>
 using namespace std;
 
-#include <vector> 
+#include <vector>
 #include <algorithm>
 #include <utility>
 #include <list>
 #include <string>
 #include <ctime>
-#include <sstream> 
+#include <sstream>
 #include <bitset>
 #include <string>
 #include <sstream>
@@ -34,29 +34,6 @@ using namespace std;
 #define MAGENTA "\033[35m"      /* Magenta */
 #define CYAN    "\033[36m"      /* Cyan */
 
-
-// Struct
-struct Files
-{
-	string file_name;
-	string timestamp;
-	string access; 
-};
-
-struct Folders
-{
-	// Variables
-	string folder_name;
-	string timestamp;
-	string access; 
-	pair <list<Folders>,list<Files>> contents;
-	Folders* parent_directory;
-
-	// Functions
-	Folders* get_folder() {return this;}
-	Folders &operator = (const Folders &folder);
-};
-
 // Users and groups
 struct Users
 {
@@ -67,8 +44,31 @@ struct Users
 	Users &operator = (const Users &user);
 };
 
+// Struct
+struct Files
+{
+	string file_name;
+	string timestamp;
+	string access;
+	Users* owner;
+};
 
-// overload = 
+struct Folders
+{
+	// Variables
+	string folder_name;
+	string timestamp;
+	string access;
+	Users* owner;
+	pair <list<Folders>,list<Files>> contents;
+	Folders* parent_directory;
+
+	// Functions
+	Folders* get_folder() {return this;}
+	Folders &operator = (const Folders &folder);
+};
+
+// overload =
 Folders &Folders::operator = (const Folders &folder)
 {
 	return *this;
@@ -93,9 +93,99 @@ string path_func(Folders* current_directory)
 			temp.insert(0, i->folder_name);
 			temp.insert(0, "/");
 			i = i->parent_directory->get_folder();
-		}	
+		}
 		return path + i->folder_name + temp + "$ ";
 
+	}
+}
+
+string has_folder_access(Users* user, Folders* folder, string level)
+{
+	string true_permission = "";
+	bool part_of_group = false;
+	for (auto & i : user->user_groups)
+	{
+		for (auto & j : folder->owner->user_groups)
+		{
+			if (i == j)
+			{
+				if (level[0] == 'r' && folder->access[3] == '1')
+					true_permission += 'r';
+				else
+					true_permission += '-';
+				if (level[1] == 'w' && folder->access[4] == '1')
+					true_permission += 'w';
+				else
+					true_permission += '-';
+				if (level[2] == 'x' && folder->access[5] == '1')
+					true_permission += 'x';
+				else
+					true_permission += '-';
+				part_of_group = true;
+				return true_permission;
+			}
+		}
+	}
+	if (!part_of_group) //user is not a part of the owners group and uses the system permission level
+	{
+		if (level[0] == 'r' && folder->access[6] == '1')
+			true_permission += 'r';
+		else
+			true_permission += '-';
+		if (level[1] == 'w' && folder->access[7] == '1')
+			true_permission += 'w';
+		else
+			true_permission += '-';
+		if (level[2] == 'x' && folder->access[8] == '1')
+			true_permission += 'x';
+		else
+			true_permission += '-';
+		return true_permission;
+	}
+}
+
+string has_file_access(Users* user, Files file, string level)
+{
+	string true_permission = "";
+	bool part_of_group = false;
+	for (auto & i : user->user_groups)
+	{
+		for (auto & j : file.owner->user_groups)
+		{
+			if (i == j)
+			{
+				if (level[0] == 'r' && file.access[3] == '1')
+					true_permission += 'r';
+				else
+					true_permission += '-';
+				if (level[1] == 'w' && file.access[4] == '1')
+					true_permission += 'w';
+				else
+					true_permission += '-';
+				if (level[2] == 'x' && file.access[5] == '1')
+					true_permission += 'x';
+				else
+					true_permission += '-';
+				part_of_group = true;
+				return true_permission;
+			}
+		}
+	}
+	if (!part_of_group) //user is not a part of the owners group and uses the system permission level
+	{
+		if (level[0] == 'r' && file.access[6] == '1')
+			true_permission += 'r';
+		else
+			true_permission += '-';
+		if (level[1] == 'w' && file.access[7] == '1')
+			true_permission += 'w';
+		else
+			true_permission += '-';
+		if (level[2] == 'x' && file.access[8] == '1')
+			true_permission += 'x';
+		else
+			true_permission += '-';
+		return true_permission;
 	}
 }
 
@@ -180,11 +270,12 @@ int main()
 	ROOT.access = "111000000";
 	ROOT.timestamp = currentDateTime();
 
-	// Create initial user and group 
+	// Create initial user and group
 	Users ROOT_USER;
 	string USERS = "USERS";
 	ROOT_USER.user_name = "ROOT_USER";
 	ROOT_USER.user_groups.push_back(USERS);
+	ROOT.owner = ROOT_USER.get_user();
 
 	vector<Users> users_list;
 	users_list.push_back(ROOT_USER);
@@ -203,7 +294,7 @@ int main()
 	string action_4 = "";
 	string action_5 = "";
 	int space = 0;
-	bool running = true; 
+	bool running = true;
 	Folders* current_directory;
 
 	current_directory = ROOT.get_folder();
@@ -228,9 +319,9 @@ int main()
 			if (input[i] == ' ')
 				space += 1;
 			else if (input[i] != ' ' && space == 0)
-				command += input[i]; 
+				command += input[i];
 			else if (input[i] != ' ' && space == 1)
-				action_1 += input[i]; 
+				action_1 += input[i];
 			else if (input[i] != ' ' && space == 2)
 				action_2 += input[i];
 			else if (input[i] != ' ' && space == 3)
@@ -242,7 +333,7 @@ int main()
 		}
 
 		// Logic for input using the enums
-    switch (hashit(command)) 
+    switch (hashit(command))
     {
     	case e_none:
     		cout << RED << "PLEASE ENTER AN ACTUAL COMMMAND" << RESET << endl;
@@ -265,13 +356,13 @@ int main()
 	    				else
 	    					i.access[index] = '-';
 	    				index++;
-		    		
+
 	    				if (i.access[index] == '1' || i.access[index] == 'w')
 	    					i.access[index] = 'w';
 	    				else
 	    					i.access[index] = '-';
 	    				index++;
-	    			
+
 	    				if (i.access[index] == '1' || i.access[index] == 'x')
 	    					i.access[index] = 'x';
 	    				else
@@ -291,13 +382,13 @@ int main()
 	    				else
 	    					i.access[index] = '-';
 	    				index++;
-		    		
+
 	    				if (i.access[index] == '1' || i.access[index] == 'w')
 	    					i.access[index] = 'w';
 	    				else
 	    					i.access[index] = '-';
 	    				index++;
-	    			
+
 	    				if (i.access[index] == '1' || i.access[index] == 'x')
 	    					i.access[index] = 'x';
 	    				else
@@ -305,14 +396,14 @@ int main()
 	    				index++;
 		    		}
 	    		}
-	    		
+
 					cout<<endl;
 					for (auto const& i : current_directory->contents.first) {
-				    cout << BLUE << "d" << i.access << " 1pbg " << "clfn4y" << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
+				    cout << BLUE << "d" << i.access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
 				  }
 				  // Print the files
 				  for (auto const& i : current_directory->contents.second) {
-				    cout << GREEN << "-" << i.access << " 1pbg " << "clfn4y" << " 1024 " << i.timestamp << " " << i.file_name << RESET << endl;
+				    cout << GREEN << "-" << i.access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.file_name << RESET << endl;
 				  }
 				  cout<<endl<<endl;
 	    	}
@@ -338,7 +429,7 @@ int main()
 						current_directory = current_directory->parent_directory;
 					else
 						cout << RED << "CANNOT LEAVE ROOT" << RESET << endl;
-						
+
 				}
 				else if (action_1 == "")
 				{
@@ -347,7 +438,7 @@ int main()
 				else
 				{
 					bool found_folder = false;
-					for (auto & i : current_directory->contents.first) 
+					for (auto & i : current_directory->contents.first)
 					{
 				    if (action_1 == i.folder_name && found_folder == false)
 				    {
@@ -385,6 +476,7 @@ int main()
 						create_folder.folder_name = action_1;
 						create_folder.access = "111000000";
 						create_folder.timestamp = currentDateTime();
+						create_folder.owner = active_user;
 
 						current_directory->contents.first.push_back(create_folder);
 					}
@@ -393,7 +485,7 @@ int main()
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
-	   		
+
 	      break;
 	   	}
 	    case e_rmdir:
@@ -403,7 +495,7 @@ int main()
 	   			bool match = false;
 		    	list<Folders>::iterator it = current_directory->contents.first.begin();
 					while (it != current_directory->contents.first.end()) {
-						if (it->folder_name == action_1) 
+						if (it->folder_name == action_1)
 						{
 							it = current_directory->contents.first.erase(it);
 							match = true;
@@ -416,7 +508,7 @@ int main()
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
-			 
+
 	      break;
 	    }
       case e_rm:
@@ -426,7 +518,7 @@ int main()
 	   			bool match = false;
 	      	list<Files>::iterator it = current_directory->contents.second.begin();
 					while (it != current_directory->contents.second.end()) {
-						if (it->file_name == action_1) 
+						if (it->file_name == action_1)
 						{
 							it = current_directory->contents.second.erase(it);
 							match = true;
@@ -455,10 +547,10 @@ int main()
 			    	{
 
 			    		string num_char = "";
-			    		num_char += action_1[i]; 
-			    		stringstream converter(num_char); 
-					    int num = 0; 
-					    converter >> num; 
+			    		num_char += action_1[i];
+			    		stringstream converter(num_char);
+					    int num = 0;
+					    converter >> num;
 
 					    if (num <= 7)
 					    {
@@ -466,11 +558,11 @@ int main()
 					    }
 					    else
 					    {
-					    	cout << RED << "NOT VALID NUMBER" << RESET << endl; 
+					    	cout << RED << "NOT VALID NUMBER" << RESET << endl;
 					    	fail = true;
 					    }
 
-					 
+
 			    	}
 			    	if (!fail)
 			    	{
@@ -490,7 +582,7 @@ int main()
 					    	}
 						  }
 						  if (!found)
-						  	cout << RED << "NOT VALID NAME" << RESET << endl; 
+						  	cout << RED << "NOT VALID NAME" << RESET << endl;
 			    	}
 		    	}
 		    	else
@@ -526,6 +618,7 @@ int main()
 						create_file.file_name = action_1;
 						create_file.access = "111000000";
 						create_file.timestamp = currentDateTime();
+						create_file.owner = active_user;
 
 						current_directory->contents.second.push_back(create_file);
 					}
@@ -673,6 +766,23 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
+					for (auto & i : users_list)
+					{
+						if (action_1 == i.user_name)
+						{
+							for (auto & j : current_directory->contents.first)
+							{
+								if (action_2 == j.folder_name)
+								{
+									string permission = has_folder_access(active_user, j.get_folder(), "-w-");
+									if (permission[1] == 'w')
+									{
+										
+									}
+								}
+							}
+						}
+					}
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
@@ -755,6 +865,3 @@ int main()
 
 	return 0;
 }
-
-
-
