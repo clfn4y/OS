@@ -774,7 +774,7 @@ int main()
 		   					}
 		   				}
 		   				if (!found)
-								cout << RED << "NOT AN ACTUAL USER" << RESET << endl;			   				
+								cout << RED << "NOT AN ACTUAL USER" << RESET << endl;
 	   				}
 	   				else
 	   					cout << RED << "NOT AN ACTUAL GROUP" << RESET << endl;
@@ -793,7 +793,7 @@ int main()
 		   					}
 		   				}
 		   				if (!found)
-								cout << RED << "NOT AN ACTUAL USER" << RESET << endl;			   				
+								cout << RED << "NOT AN ACTUAL USER" << RESET << endl;
 	   				}
 	   				else
 	   					cout << RED << "NOT AN ACTUAL GROUP" << RESET << endl;
@@ -813,7 +813,7 @@ int main()
 	   		{
 					for (auto & i : users_list)
 					{
-						if (action_1 == i.user_name)
+						if (action_1 == i->user_name)
 						{
 							for (auto & j : current_directory->contents.first)
 							{
@@ -822,7 +822,7 @@ int main()
 									string permission = has_folder_access(active_user, j.get_folder(), "-w-");
 									if (permission[1] == 'w')
 									{
-										
+
 									}
 								}
 							}
