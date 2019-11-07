@@ -39,6 +39,7 @@ struct Users
 {
 	string user_name;
 	vector<string> user_groups;
+	string primary_group;
 
 	Users* get_user() {return this;}
 	Users &operator = (const Users &user);
@@ -68,7 +69,6 @@ struct Folders
 	Folders &operator = (const Folders &folder);
 };
 
-// overload =
 Folders &Folders::operator = (const Folders &folder)
 {
 	return *this;
@@ -274,11 +274,12 @@ int main()
 	Users ROOT_USER;
 	string USERS = "USERS";
 	ROOT_USER.user_name = "ROOT_USER";
+	ROOT_USER.primary_group = USERS;
 	ROOT_USER.user_groups.push_back(USERS);
 	ROOT.owner = ROOT_USER.get_user();
 
-	vector<Users> users_list;
-	users_list.push_back(ROOT_USER);
+	vector<Users*> users_list;
+	users_list.push_back(ROOT_USER.get_user());
 	vector<string> group_list;
 	group_list.push_back(USERS);
 
@@ -642,16 +643,16 @@ int main()
 	   				int flag = false;
 		   			for (auto & i : users_list)
 						{
-							if (i.user_name == action_3)
+							if (i->user_name == action_3)
 								flag = true;
 						}
 
 		   			if (!flag)
 		   			{
-		   				// create user and add them to users group
-		   				Users new_user;
-		   				new_user.user_name = action_3;
-		   				new_user.user_groups.push_back(USERS);
+		   				Users * new_user = new Users;
+		   				new_user->user_name = action_3;
+		   				new_user->user_groups.push_back(USERS);
+		   				new_user->primary_group = USERS;
 
 		   				// Add it to the other groups
 							stringstream ss(action_2);
@@ -663,7 +664,7 @@ int main()
 								{
 									if (i == group)
 									{
-										new_user.user_groups.push_back(group);
+										new_user->user_groups.push_back(group);
 										found = true;
 									}
 								}
@@ -680,15 +681,16 @@ int main()
 	   				bool flag = false;
 		   			for (auto & i : users_list)
 						{
-							if (i.user_name == action_1)
+							if (i->user_name == action_1)
 								flag = true;
 						}
 
 		   			if (!flag)
 		   			{
-		   				Users new_user;
-		   				new_user.user_name = action_1;
-		   				new_user.user_groups.push_back(USERS);
+		   				Users * new_user = new Users;
+		   				new_user->user_name = action_1;
+		   				new_user->user_groups.push_back(USERS);
+		   				new_user->primary_group = USERS;
 		   				users_list.push_back(new_user);
 		   			}
 		   			else
@@ -708,10 +710,10 @@ int main()
 	   			bool flag = false;
 	   			for (auto & i : users_list)
 					{
-						if (i.user_name == action_1)
+						if (i->user_name == action_1)
 						{
 							flag = true;
-							active_user = i.get_user();
+							active_user = i->get_user();
 						}
 					}
 
@@ -755,6 +757,49 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
+	   			if (action_1 == "-g")
+	   			{
+	   				if(find(group_list.begin(), group_list.end(), action_2) != group_list.end())
+	   				{
+	   					bool found = false;
+		   				for(auto & i : users_list)
+		   				{
+		   					if (i->user_name == action_3)
+		   					{
+		   						found = true;
+		   						if(find(i->user_groups.begin(), i->user_groups.end(), action_2) != i->user_groups.end())
+		   							i->primary_group = action_2;
+		   						else
+		   							cout << RED << "NOT IN GROUP" << RESET << endl;
+		   					}
+		   				}
+		   				if (!found)
+								cout << RED << "NOT AN ACTUAL USER" << RESET << endl;			   				
+	   				}
+	   				else
+	   					cout << RED << "NOT AN ACTUAL GROUP" << RESET << endl;
+	   			}
+	   			else if (action_1 == "-a" && action_2 == "-G")
+	   			{
+	   				if(find(group_list.begin(), group_list.end(), action_3) != group_list.end())
+	   				{
+	   					bool found = false;
+		   				for(auto & i : users_list)
+		   				{
+		   					if (i->user_name == action_4)
+		   					{
+		   						found = true;
+		   						i->user_groups.push_back(action_3);
+		   					}
+		   				}
+		   				if (!found)
+								cout << RED << "NOT AN ACTUAL USER" << RESET << endl;			   				
+	   				}
+	   				else
+	   					cout << RED << "NOT AN ACTUAL GROUP" << RESET << endl;
+	   			}
+	   			else
+	   				cout << RED << "WRONG FLAGS" << RESET << endl;
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
@@ -830,10 +875,10 @@ int main()
 	   			bool found = false;
 	   			for(auto & i : users_list)
 	   			{
-	   				if(i.user_name == action_1)
+	   				if(i->user_name == action_1)
 	   				{
 	   					found = true;
-	   					for(auto & j : i.user_groups)
+	   					for(auto & j : i->user_groups)
 	   						cout << GREEN << j << RESET << " ";
 	   					cout << endl;
 	   				}
@@ -851,7 +896,7 @@ int main()
 	   	case e_users:
 	    {
 	    	for(auto & i: users_list)
-	    		cout << GREEN << i.user_name << " " << RESET;
+	    		cout << GREEN << i->user_name << " " << RESET;
 	    	cout << endl;
 
 	   		break;
