@@ -813,7 +813,7 @@ int main()
 	   		{
 					for (auto & i : users_list)
 					{
-						if (action_1 == i.user_name)
+						if (action_1 == i->user_name)
 						{
 							for (auto & j : current_directory->contents.first)
 							{
