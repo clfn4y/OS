@@ -51,6 +51,8 @@ struct Files
 	string file_name;
 	string timestamp;
 	string access;
+	string format_access;
+	string primary_group;
 	Users* owner;
 };
 
@@ -60,6 +62,8 @@ struct Folders
 	string folder_name;
 	string timestamp;
 	string access;
+	string format_access;
+	string primary_group;
 	Users* owner;
 	pair <list<Folders>,list<Files>> contents;
 	Folders* parent_directory;
@@ -105,9 +109,9 @@ string has_folder_access(Users* user, Folders* folder, string level)
 	bool part_of_group = false;
 	for (auto & i : user->user_groups)
 	{
-		for (auto & j : folder->owner->user_groups)
-		{
-			if (i == j)
+		// for (auto & j : folder->owner->user_groups)
+		// {
+			if (i == folder->primary_group)
 			{
 				if (level[0] == 'r' && folder->access[3] == '1')
 					true_permission += 'r';
@@ -124,7 +128,7 @@ string has_folder_access(Users* user, Folders* folder, string level)
 				part_of_group = true;
 				return true_permission;
 			}
-		}
+		// }
 	}
 	if (!part_of_group) //user is not a part of the owners group and uses the system permission level
 	{
@@ -150,9 +154,9 @@ string has_file_access(Users* user, Files file, string level)
 	bool part_of_group = false;
 	for (auto & i : user->user_groups)
 	{
-		for (auto & j : file.owner->user_groups)
-		{
-			if (i == j)
+		// for (auto & j : file.owner->user_groups)
+		// {
+			if (i == file.primary_group)
 			{
 				if (level[0] == 'r' && file.access[3] == '1')
 					true_permission += 'r';
@@ -169,7 +173,7 @@ string has_file_access(Users* user, Files file, string level)
 				part_of_group = true;
 				return true_permission;
 			}
-		}
+		// }
 	}
 	if (!part_of_group) //user is not a part of the owners group and uses the system permission level
 	{
@@ -350,61 +354,65 @@ int main()
 	    		for (auto & i : current_directory->contents.first)
 	    		{
 		    		int index = 0;
+						string temp_access = "---------";
 		    		while(index < 9)
 		    		{
 	    				if (i.access[index] == '1' || i.access[index] == 'r')
-	    					i.access[index] = 'r';
+	    					temp_access[index] = 'r';
 	    				else
-	    					i.access[index] = '-';
+	    					temp_access[index] = '-';
 	    				index++;
 
 	    				if (i.access[index] == '1' || i.access[index] == 'w')
-	    					i.access[index] = 'w';
+	    					temp_access[index] = 'w';
 	    				else
-	    					i.access[index] = '-';
+	    					temp_access[index] = '-';
 	    				index++;
 
 	    				if (i.access[index] == '1' || i.access[index] == 'x')
-	    					i.access[index] = 'x';
+	    					temp_access[index] = 'x';
 	    				else
-	    					i.access[index] = '-';
+	    					temp_access[index] = '-';
 	    				index++;
 		    		}
+						i.format_access = temp_access;
 	    		}
 
 	    		// Convert to correct format for access
 	    		for (auto & i : current_directory->contents.second)
 	    		{
 		    		int index = 0;
+						string temp_access = "---------";
 		    		while(index < 9)
 		    		{
 	    				if (i.access[index] == '1' || i.access[index] == 'r')
-	    					i.access[index] = 'r';
+	    					temp_access[index] = 'r';
 	    				else
-	    					i.access[index] = '-';
+	    					temp_access[index] = '-';
 	    				index++;
 
 	    				if (i.access[index] == '1' || i.access[index] == 'w')
-	    					i.access[index] = 'w';
+	    					temp_access[index] = 'w';
 	    				else
-	    					i.access[index] = '-';
+	    					temp_access[index] = '-';
 	    				index++;
 
 	    				if (i.access[index] == '1' || i.access[index] == 'x')
-	    					i.access[index] = 'x';
+	    					temp_access[index] = 'x';
 	    				else
-	    					i.access[index] = '-';
+	    					temp_access[index] = '-';
 	    				index++;
 		    		}
+						i.format_access = temp_access;
 	    		}
 
 					cout<<endl;
 					for (auto const& i : current_directory->contents.first) {
-				    cout << BLUE << "d" << i.access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
+				    cout << BLUE << "d" << i.format_access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
 				  }
 				  // Print the files
 				  for (auto const& i : current_directory->contents.second) {
-				    cout << GREEN << "-" << i.access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.file_name << RESET << endl;
+				    cout << GREEN << "-" << i.format_access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.file_name << RESET << endl;
 				  }
 				  cout<<endl<<endl;
 	    	}
@@ -478,6 +486,7 @@ int main()
 						create_folder.access = "111000000";
 						create_folder.timestamp = currentDateTime();
 						create_folder.owner = active_user;
+						create_folder.primary_group = active_user->primary_group;
 
 						current_directory->contents.first.push_back(create_folder);
 					}
@@ -620,6 +629,7 @@ int main()
 						create_file.access = "111000000";
 						create_file.timestamp = currentDateTime();
 						create_file.owner = active_user;
+						create_file.primary_group = active_user->primary_group;
 
 						current_directory->contents.second.push_back(create_file);
 					}
@@ -809,29 +819,55 @@ int main()
 
 	   	case e_chown:
 	    {
+				bool user_found = false, object_found = false;
 	    	if (action_1 != "")
 	   		{
 					for (auto & i : users_list)
 					{
 						if (action_1 == i->user_name)
 						{
+							user_found = true;
 							for (auto & j : current_directory->contents.first)
 							{
 								if (action_2 == j.folder_name)
 								{
+									object_found = true;
 									string permission = has_folder_access(active_user, j.get_folder(), "-w-");
 									if (permission[1] == 'w')
 									{
-
+										j.owner = i;
+										j.access = "111000000";
+										j.primary_group = i->primary_group;
 									}
+									else
+										cout << RED << "CHOSEN USER DOES NOT HAVE PERMISSION TO PERFORM THIS ACTION" << RESET << endl;
+								}
+							}
+							for (auto & j : current_directory->contents.second)
+							{
+								if (action_2 == j.file_name)
+								{
+									object_found = true;
+									string permission = has_file_access(active_user, j, "-w-");
+									if (permission[1] == 'w')
+									{
+										j.owner = i;
+										j.access = "111000000";
+										j.primary_group = i->primary_group;
+									}
+									else
+										cout << RED << "CHOSEN USER DOES NOT HAVE PERMISSION TO PERFORM THIS ACTION" << RESET << endl;
 								}
 							}
 						}
 					}
+					if (!user_found)
+						cout << RED << "NOT AN ACTUAL USER" << RESET << endl;
+					if (!object_found && user_found)
+						cout << RED << "NOT AN ACTUAL FOLDER OR FILE" << RESET << endl;
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
-
 	   		break;
 	   	}
 
