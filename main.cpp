@@ -741,6 +741,58 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
+	   			if (action_1 == "-G")
+	   			{
+	   				bool found = false;
+	   				int user_index = 0;
+	   				int group_index = 0;
+	   				if(find(group_list.begin(), group_list.end(), action_2) != group_list.end())
+	   				{
+ 							for(auto & i : users_list)
+	   					{
+	   						if (i->user_name == action_3)
+	   						{
+	   							for (auto & j : i->user_groups)
+	   							{
+	   								if (j == action_2)
+	   								{
+	   									found = true;
+	   									if (action_2 == "USERS" || action_3 == "ROOT_USER")
+				   							cout << RED << "CANT EDIT Users group or ROOT_USER" << RESET << endl;
+				   						else
+				   							users_list[user_index]->user_groups.erase(users_list[user_index]->user_groups.begin()+group_index);
+	   								}
+	   								group_index++;
+	   							}
+
+	   						}
+	   						user_index++;
+	   					}
+
+	   					if (!found)
+	   						cout << RED << "USER NOT APART OF GROUP OR USER NOT FOUND" << RESET << endl;
+	   				}
+	   				else
+	   					cout << RED << "NOT AN ACTUAL GROUP" << RESET << endl;
+	   			}
+	   			else
+	   			{
+	   				if (action_1 != "ROOT_USER")
+	   				{
+	   					bool found = false;
+	   					for (auto & i : users_list)
+	   						if (i->user_name == action_1)
+	   							found = true;
+	   					if (!found)
+	   						cout << RED << "USER NOT FOUND" << RESET << endl;
+	   					else
+	   					{
+	   						cout << "Delete user here" << endl;
+	   					}
+	   				}
+	   				else
+	   					cout << RED << "CANT DELETE ROOT_USER" << RESET << endl;
+	   			}
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
