@@ -107,10 +107,28 @@ string has_folder_access(Users* user, Folders* folder, string level)
 {
 	string true_permission = "";
 	bool part_of_group = false;
-	for (auto & i : user->user_groups)
+	bool owner = false;
+	if (folder->owner->user_name == user->user_name)
 	{
-		// for (auto & j : folder->owner->user_groups)
-		// {
+		if (level[0] == 'r' && folder->access[0] == '1')
+			true_permission += 'r';
+		else
+			true_permission += '-';
+		if (level[1] == 'w' && folder->access[1] == '1')
+			true_permission += 'w';
+		else
+			true_permission += '-';
+		if (level[2] == 'x' && folder->access[2] == '1')
+			true_permission += 'x';
+		else
+			true_permission += '-';
+		owner = true;
+		return true_permission;
+	}
+	if (owner == false)
+	{
+		for (auto & i : user->user_groups)
+		{
 			if (i == folder->primary_group)
 			{
 				if (level[0] == 'r' && folder->access[3] == '1')
@@ -128,23 +146,23 @@ string has_folder_access(Users* user, Folders* folder, string level)
 				part_of_group = true;
 				return true_permission;
 			}
-		// }
-	}
-	if (!part_of_group) //user is not a part of the owners group and uses the system permission level
-	{
-		if (level[0] == 'r' && folder->access[6] == '1')
-			true_permission += 'r';
-		else
-			true_permission += '-';
-		if (level[1] == 'w' && folder->access[7] == '1')
-			true_permission += 'w';
-		else
-			true_permission += '-';
-		if (level[2] == 'x' && folder->access[8] == '1')
-			true_permission += 'x';
-		else
-			true_permission += '-';
-		return true_permission;
+		}
+		if (!part_of_group) //user is not a part of the owners group and uses the system permission level
+		{
+			if (level[0] == 'r' && folder->access[6] == '1')
+				true_permission += 'r';
+			else
+				true_permission += '-';
+			if (level[1] == 'w' && folder->access[7] == '1')
+				true_permission += 'w';
+			else
+				true_permission += '-';
+			if (level[2] == 'x' && folder->access[8] == '1')
+				true_permission += 'x';
+			else
+				true_permission += '-';
+			return true_permission;
+		}
 	}
 }
 
@@ -152,10 +170,28 @@ string has_file_access(Users* user, Files file, string level)
 {
 	string true_permission = "";
 	bool part_of_group = false;
-	for (auto & i : user->user_groups)
+	bool owner = false;
+	if (file.owner->user_name == user->user_name)
 	{
-		// for (auto & j : file.owner->user_groups)
-		// {
+		if (level[0] == 'r' && file.access[0] == '1')
+			true_permission += 'r';
+		else
+			true_permission += '-';
+		if (level[1] == 'w' && file.access[1] == '1')
+			true_permission += 'w';
+		else
+			true_permission += '-';
+		if (level[2] == 'x' && file.access[2] == '1')
+			true_permission += 'x';
+		else
+			true_permission += '-';
+		owner = true;
+		return true_permission;
+	}
+	if (owner == false)
+	{
+		for (auto & i : user->user_groups)
+		{
 			if (i == file.primary_group)
 			{
 				if (level[0] == 'r' && file.access[3] == '1')
@@ -173,23 +209,23 @@ string has_file_access(Users* user, Files file, string level)
 				part_of_group = true;
 				return true_permission;
 			}
-		// }
-	}
-	if (!part_of_group) //user is not a part of the owners group and uses the system permission level
-	{
-		if (level[0] == 'r' && file.access[6] == '1')
-			true_permission += 'r';
-		else
-			true_permission += '-';
-		if (level[1] == 'w' && file.access[7] == '1')
-			true_permission += 'w';
-		else
-			true_permission += '-';
-		if (level[2] == 'x' && file.access[8] == '1')
-			true_permission += 'x';
-		else
-			true_permission += '-';
-		return true_permission;
+		}
+		if (!part_of_group) //user is not a part of the owners group and uses the system permission level
+		{
+			if (level[0] == 'r' && file.access[6] == '1')
+				true_permission += 'r';
+			else
+				true_permission += '-';
+			if (level[1] == 'w' && file.access[7] == '1')
+				true_permission += 'w';
+			else
+				true_permission += '-';
+			if (level[2] == 'x' && file.access[8] == '1')
+				true_permission += 'x';
+			else
+				true_permission += '-';
+			return true_permission;
+		}
 	}
 }
 
@@ -258,6 +294,54 @@ string currentDateTime() {
     return buf;
 }
 
+void delete_user(string name, Folders* index, Users* root)
+{
+	if (index->contents.first.empty() && index->contents.second.empty())
+		return;
+	else
+	{
+		for (auto & i : index->contents.second)
+		{
+			if (i.owner->user_name == name)
+				i.owner = root->get_user();
+		}
+		for (auto & i : index->contents.first)
+		{
+			if (i.owner->user_name == name)
+			{
+				i.owner = root->get_user();
+				delete_user(name, i.get_folder(), root);
+			}
+		}
+		return;
+	}
+
+}
+
+void delete_group(string name, Folders* index)
+{
+	if (index->contents.first.empty() && index->contents.second.empty())
+		return;
+	else
+	{
+		for (auto & i : index->contents.second)
+		{
+			if (i.primary_group == name)
+				i.primary_group = "USERS";
+		}
+		for (auto & i : index->contents.first)
+		{
+			if (i.primary_group == name)
+			{
+				i.primary_group = "USERS";
+				delete_group(name, i.get_folder());
+			}
+		}
+		return;
+	}
+
+}
+
 
 // Main
 int main()
@@ -271,7 +355,7 @@ int main()
 	Folders ROOT;
 	ROOT.folder_name = "ROOT";
 	ROOT.parent_directory = NULL;
-	ROOT.access = "111000000";
+	ROOT.access = "111111111";
 	ROOT.timestamp = currentDateTime();
 
 	// Create initial user and group
@@ -348,7 +432,9 @@ int main()
 	      break;
 	    case e_ls:
 	    {
-	    	if (action_1 == "-l")
+	    	string permission = has_folder_access(active_user, current_directory->get_folder(), "r--");
+
+	    	if (action_1 == "-l" && permission[0] == 'r')
 	    	{
 		    	// Convert to correct format for access
 	    		for (auto & i : current_directory->contents.first)
@@ -408,15 +494,15 @@ int main()
 
 					cout<<endl;
 					for (auto const& i : current_directory->contents.first) {
-				    cout << BLUE << "d" << i.format_access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
+				    cout << BLUE << "d" << i.format_access << " 1pbg " << i.owner->user_name << " " << i.primary_group << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
 				  }
 				  // Print the files
 				  for (auto const& i : current_directory->contents.second) {
-				    cout << GREEN << "-" << i.format_access << " 1pbg " << i.owner->user_name << " 1024 " << i.timestamp << " " << i.file_name << RESET << endl;
+				    cout << GREEN << "-" << i.format_access << " 1pbg " << i.owner->user_name << " " << i.primary_group << " 1024 " << i.timestamp << " " << i.file_name << RESET << endl;
 				  }
 				  cout<<endl<<endl;
 	    	}
-				else
+				else if (action_1 == "" && permission[0] == 'r')
 				{
 					cout<<endl;
 					for (auto const& i : current_directory->contents.first) {
@@ -426,8 +512,11 @@ int main()
 				  for (auto const& i : current_directory->contents.second) {
 				    cout << GREEN << i.file_name << RESET << "\t";
 				  }
+
 				  cout<<endl<<endl;
 				}
+				else
+					cout << RED << "CHOSEN USER DOES NOT HAVE PERMISSION TO PERFORM THIS ACTION OR NOT PROPER ACTION" << RESET << endl;
 	    	break;
 	    }
 	    case e_cd:
@@ -466,7 +555,9 @@ int main()
 	      break;
 	   	case e_mkdir:
 	   	{
-	   		if (action_1 != "")
+	   		string permission = has_folder_access(active_user, current_directory->get_folder(), "-w-");
+
+	   		if (action_1 != "" && permission[1] == 'w')
 	   		{
 	   			// Checks if folder already exist
 					bool match = false;
@@ -494,13 +585,15 @@ int main()
 						cout << RED << "ALREADY EXIST" << RESET << endl;
 	   		}
 	   		else
-	   			cout << RED << "NO ACTION" << RESET << endl;
+	   			cout << RED << "NO ACTION OR NOT PROPER PERMISSION" << RESET << endl;
 
 	      break;
 	   	}
 	    case e_rmdir:
 	    {
-	    	if (action_1 != "")
+	    	string permission = has_folder_access(active_user, current_directory->get_folder(), "-w-");
+
+	    	if (action_1 != "" && permission[1] == 'w')
 	   		{
 	   			bool match = false;
 		    	list<Folders>::iterator it = current_directory->contents.first.begin();
@@ -517,13 +610,15 @@ int main()
 						cout << RED << "DOES NOT EXIST" << RESET << endl;
 	   		}
 	   		else
-	   			cout << RED << "NO ACTION" << RESET << endl;
+	   			cout << RED << "NO ACTION or NOT PROPER PERMISSION" << RESET << endl;
 
 	      break;
 	    }
       case e_rm:
       {
-      	if (action_1 != "")
+      	string permission = has_folder_access(active_user, current_directory->get_folder(), "-w-");
+
+      	if (action_1 != "" && permission[1] == 'w')
 	   		{
 	   			bool match = false;
 	      	list<Files>::iterator it = current_directory->contents.second.begin();
@@ -540,7 +635,7 @@ int main()
 						cout << RED << "DOES NOT EXIST" << RESET << endl;
 	   		}
 	   		else
-	   			cout << RED << "NO ACTION" << RESET << endl;
+	   			cout << RED << "NO ACTION OR PROPER PERMISSION" << RESET << endl;
 
 	      break;
       }
@@ -605,7 +700,9 @@ int main()
 	    }
 	    case e_touch:
 	    {
-	    	if (action_1 != "")
+	    	string permission = has_folder_access(active_user, current_directory->get_folder(), "-w-");
+
+	    	if (action_1 != "" && permission[1] == 'w')
 	   		{
 	   			bool match = false;
 					for (auto & i : current_directory->contents.second) {
@@ -635,7 +732,7 @@ int main()
 					}
 	   		}
 	   		else
-	   			cout << RED << "NO ACTION" << RESET << endl;
+	   			cout << RED << "NO ACTION OR NOT PROPER PERMISSION" << RESET << endl;
 
 	      break;
 	    }
@@ -875,6 +972,50 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
+	   			bool found_group = false;
+	   			bool found_object = false;
+	   			for (int i = 0; i < group_list.size(); ++i)
+	   			{
+	   				if (group_list[i] == action_1)
+	   					found_group = true; 
+					}
+
+	   			if (found_group)
+	   			{
+	   				for (auto & i : current_directory->contents.first)
+						{
+							if (i.folder_name == action_2)
+							{
+								found_object = true;
+
+								string permission = has_folder_access(active_user, i.get_folder(), "-w-");
+								if (permission[1] == 'w')
+									i.primary_group = action_1;
+								else
+									cout << RED << "CHOSEN USER DOES NOT HAVE PERMISSION TO PERFORM THIS ACTION" << RESET << endl;
+							}
+		   			}
+		   			if (!found_object)
+		   			{
+		   				for (auto & i : current_directory->contents.second)
+							{
+								if (i.file_name == action_2)
+								{
+									found_object = true;
+
+									string permission = has_file_access(active_user, i, "-w-");
+									if (permission[1] == 'w')
+										i.primary_group = action_1;
+									else
+										cout << RED << "CHOSEN USER DOES NOT HAVE PERMISSION TO PERFORM THIS ACTION" << RESET << endl;
+								}
+			   			}
+			   		}
+		   			if (!found_object)
+		   				cout << RED << "OBJECT NOT FOUND" << RESET << endl;
+		   		}
+		   		else
+		   			cout << RED << "GROUP NOT FOUND" << RESET << endl;
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
@@ -925,15 +1066,19 @@ int main()
 	   				if (action_1 != "ROOT_USER")
 	   				{
 	   					bool found = false;
+	   					int index = 0;
 	   					for (auto & i : users_list)
+	   					{
 	   						if (i->user_name == action_1)
+	   						{
 	   							found = true;
+	   							delete_user(i->user_name, ROOT.get_folder(), ROOT_USER.get_user());
+	   							users_list.erase(users_list.begin()+index);
+	   						}
+	   						index ++;
+	   					}
 	   					if (!found)
 	   						cout << RED << "USER NOT FOUND" << RESET << endl;
-	   					else
-	   					{
-	   						cout << "Delete user here" << endl;
-	   					}
 	   				}
 	   				else
 	   					cout << RED << "CANT DELETE ROOT_USER" << RESET << endl;
@@ -949,6 +1094,33 @@ int main()
 	    {
 	    	if (action_1 != "")
 	   		{
+	   			if (action_1 != "USERS")
+	   			{
+	   				bool found = false;
+	   				for (int i = 0; i < group_list.size(); ++i)
+	   				{
+	   					if (group_list[i] == action_1)
+	   					{
+	   						found = true;
+	   						for (auto & i : users_list)
+	   						{
+	   							for (int j = 0; j < i->user_groups.size(); j++)
+		   						{
+		   							if (i->user_groups[j] == action_1)
+		   							{
+		   								i->user_groups.erase(i->user_groups.begin()+j);
+		   							}
+		   						}
+	   						}
+	   						delete_group(action_1, ROOT.get_folder());
+	   						group_list.erase(group_list.begin()+i);
+	   					}
+	   				}
+	   				if (!found)
+	   					cout << RED << "GROUP NOT FOUND" << RESET << endl;
+	   			}
+	   			else
+	   				cout << RED << "CAN'T DELETE USERS GROUP" << RESET << endl;
 	   		}
 	   		else
 	   			cout << RED << "NO ACTION" << RESET << endl;
@@ -998,3 +1170,11 @@ int main()
 
 	return 0;
 }
+
+
+
+
+
+
+
+
