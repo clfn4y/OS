@@ -25,14 +25,23 @@ using namespace std;
 #include <bitset>
 #include <string>
 #include <sstream>
+#include <thread>
+#include <chrono>
+#include <ctime>
+#include<cstdlib>
+#include<iomanip>
+
+#include "schedulers.h"
 
 // Define colors for output
 #define RESET   "\033[0m"
 #define RED     "\033[31m"      /* Red */
 #define GREEN   "\033[32m"      /* Green */
-#define BLUE    "\033[34m"      /* Blue */
+#define BLUE    "\033[34m"      /* CYAN */
 #define MAGENTA "\033[35m"      /* Magenta */
 #define CYAN    "\033[36m"      /* Cyan */
+
+const chrono::duration<int, std::milli> SLEEP_TIME = chrono::milliseconds(500);
 
 // Users and groups
 struct Users
@@ -53,6 +62,7 @@ struct Files
 	string access;
 	string format_access;
 	string primary_group;
+	int total_time;
 	Users* owner;
 };
 
@@ -253,6 +263,11 @@ enum enum_command {
 	e_groups,
 	e_users,
 
+	e_run,
+	e_ps,
+	e_kill,
+	e_schedHist,
+
 	e_none
 };
 
@@ -279,6 +294,12 @@ enum_command hashit (string const& inString) {
     if (inString == "groupdel") return e_groupdel;
     if (inString == "groups") return e_groups;
     if (inString == "users") return e_users;
+
+		if (inString == "run") return e_run;
+		if (inString == "ps") return e_ps;
+		if (inString == "kill") return e_kill;
+		if (inString == "schedHist") return e_schedHist;
+
 
     return e_none;
 }
@@ -339,13 +360,41 @@ void delete_group(string name, Folders* index)
 		}
 		return;
 	}
-
 }
 
+Process p1;
+
+int curTime = 0;
+int procIdx;
+vector<Process> procList;
+
+void fake_sched()
+{
+	while (true)
+	{
+		procIdx = HRRN(curTime, procList);
+		//if we were given a valid process index
+		if(procIdx >= 0 && procIdx < procList.size())
+		{
+				//update the details for the scheduled process
+				++procList[procIdx].timeScheduled;
+				if(procList[procIdx].totalTimeNeeded == procList[procIdx].timeScheduled)
+				{
+						procList[procIdx].isDone = true;
+						procList[procIdx].timeFinished = curTime;
+				}
+		}
+		this_thread::sleep_for(SLEEP_TIME);
+		curTime = curTime + 1;
+	}
+}
 
 // Main
 int main()
 {
+	srand(time(0));
+
+	thread t2(fake_sched);
 	// Start up
 	cout << "\n\n******************************************" << endl;
 	cout << "* Welcome to Caleb's Linux-style shell!! *" << endl;
@@ -393,7 +442,8 @@ int main()
 	{
 		// Location and getting input
 		path = path_func(current_directory);
-		cout << path;
+		// cout << path;
+		cout << path << endl;
 		getline(cin, input);
 
 		space = 0;
@@ -494,7 +544,7 @@ int main()
 
 					cout<<endl;
 					for (auto const& i : current_directory->contents.first) {
-				    cout << BLUE << "d" << i.format_access << " 1pbg " << i.owner->user_name << " " << i.primary_group << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
+				    cout << CYAN << "d" << i.format_access << " 1pbg " << i.owner->user_name << " " << i.primary_group << " 1024 " << i.timestamp << " " << i.folder_name << "/" << RESET << endl;
 				  }
 				  // Print the files
 				  for (auto const& i : current_directory->contents.second) {
@@ -506,7 +556,7 @@ int main()
 				{
 					cout<<endl;
 					for (auto const& i : current_directory->contents.first) {
-				    cout << BLUE << i.folder_name << RESET << "\t";
+				    cout << CYAN << i.folder_name << RESET << "\t";
 				  }
 				  // Print the files
 				  for (auto const& i : current_directory->contents.second) {
@@ -524,7 +574,14 @@ int main()
 	    	if (action_1 == "..")
 				{
 					if (current_directory->parent_directory != NULL)
-						current_directory = current_directory->parent_directory;
+					{
+						string permission = has_folder_access(active_user, current_directory->get_folder(), "--x");
+						string permission2 = has_folder_access(active_user, current_directory->parent_directory->get_folder(), "--x");
+						if (permission[2] == 'x' && permission2[2] == 'x')
+							current_directory = current_directory->parent_directory;
+						else
+							cout << RED << "NOT PROPER PERMISSION" << RESET << endl;
+					}
 					else
 						cout << RED << "CANNOT LEAVE ROOT" << RESET << endl;
 
@@ -540,9 +597,16 @@ int main()
 					{
 				    if (action_1 == i.folder_name && found_folder == false)
 				    {
-				    	found_folder = true;
-				    	i.parent_directory = current_directory->get_folder();
-				    	current_directory = i.get_folder();
+							string permission = has_folder_access(active_user, current_directory->get_folder(), "--x");
+							string permission2 = has_folder_access(active_user, i.get_folder(), "--x");
+							found_folder = true;
+							if (permission[2] == 'x' && permission2[2] == 'x')
+							{
+								i.parent_directory = current_directory->get_folder();
+								current_directory = i.get_folder();
+							}
+							else
+								cout << RED << "NOT PROPER PERMISSION" << RESET << endl;
 				    }
 				  }
 					if (found_folder == false)
@@ -574,7 +638,7 @@ int main()
 					{
 						Folders create_folder;
 						create_folder.folder_name = action_1;
-						create_folder.access = "111000000";
+						create_folder.access = "111111000";
 						create_folder.timestamp = currentDateTime();
 						create_folder.owner = active_user;
 						create_folder.primary_group = active_user->primary_group;
@@ -674,16 +738,24 @@ int main()
 			    		for (auto & i : current_directory->contents.first) {
 					    	if (i.folder_name == action_2)
 					    	{
-					    		i.access = temp;
-					    		found = true;
+									string permission = has_folder_access(active_user, i.get_folder(), "-w-");
+									found = true;
+									if (permission[1] == 'w')
+										i.access = temp;
+									else
+										cout << RED << "NOT PROPER PERMISSION" << RESET << endl;
 					    	}
 						  }
 
 						  for (auto & i : current_directory->contents.second) {
 						    if (i.file_name == action_2)
 					    	{
-					    		i.access = temp;
-					    		found = true;
+									string permission = has_file_access(active_user, i, "-w-");
+									found = true;
+									if (permission[1] == 'w')
+										i.access = temp;
+									else
+										cout << RED << "NOT PROPER PERMISSION" << RESET << endl;
 					    	}
 						  }
 						  if (!found)
@@ -708,25 +780,35 @@ int main()
 					for (auto & i : current_directory->contents.second) {
 				    if (i.file_name == action_1)
 				    {
+							string permission = has_file_access(active_user, i, "-w-");
 							match = true;
-							i.timestamp  = currentDateTime();
+							if (permission[1] == 'w')
+								i.timestamp  = currentDateTime();
+							else
+								cout << RED << "NOT PROPER PERMISSION" << RESET << endl;
 				    }
 				  }
 				  for (auto & i : current_directory->contents.first) {
 				    if (i.folder_name == action_1)
 				    {
+							string permission = has_folder_access(active_user, i.get_folder(), "-w-");
 							match = true;
-							i.timestamp  = currentDateTime();
+							if (permission[1] == 'w')
+								i.timestamp  = currentDateTime();
+							else
+								cout << RED << "NOT PROPER PERMISSION" << RESET << endl;
 				    }
 				  }
 					if (!match)
 					{
+						int r = rand() % (51 - 10) + 10;
 						Files create_file;
 						create_file.file_name = action_1;
-						create_file.access = "111000000";
+						create_file.access = "111111000";
 						create_file.timestamp = currentDateTime();
 						create_file.owner = active_user;
 						create_file.primary_group = active_user->primary_group;
+						create_file.total_time = r;
 
 						current_directory->contents.second.push_back(create_file);
 					}
@@ -933,7 +1015,7 @@ int main()
 									if (permission[1] == 'w')
 									{
 										j.owner = i;
-										j.access = "111000000";
+										j.access = "111111000";
 										j.primary_group = i->primary_group;
 									}
 									else
@@ -949,7 +1031,7 @@ int main()
 									if (permission[1] == 'w')
 									{
 										j.owner = i;
-										j.access = "111000000";
+										j.access = "111111000";
 										j.primary_group = i->primary_group;
 									}
 									else
@@ -977,7 +1059,7 @@ int main()
 	   			for (int i = 0; i < group_list.size(); ++i)
 	   			{
 	   				if (group_list[i] == action_1)
-	   					found_group = true; 
+	   					found_group = true;
 					}
 
 	   			if (found_group)
@@ -1162,6 +1244,90 @@ int main()
 	   		break;
 	   	}
 
+			case e_run:
+	    {
+				bool found = false;
+				if (action_1 != "")
+	   		{
+					for(auto & i : current_directory->contents.second)
+	   			{
+						if (i.file_name == action_1)
+						{
+							string permission = has_file_access(active_user, i, "--x");
+							found = true;
+							if (permission[2] == 'x')
+							{
+								p1.id = i.file_name;
+								p1.startTime = curTime;
+								p1.totalTimeNeeded = i.total_time;
+								procList.push_back(p1);
+							}
+							else
+								cout << RED << "NOT PROPER PERMISSION" << RESET << endl;
+						}
+					}
+					if (!found)
+						cout << RED << "FILE NOT FOUND" << RESET << endl;
+				}
+				else
+					cout << RED << "NO ACTION" << RESET << endl;
+	   		break;
+	   	}
+
+			case e_ps:
+	    {
+				bool flag = false;
+				if (action_1 == "")
+	   		{
+					for(auto & i : procList)
+	   			{
+						if (!i.isDone)
+						{
+							flag = true;
+						}
+					}
+					if (flag)
+					{
+						cout << MAGENTA << "ProcID | Start | Total Scheduled | Total Needed |" << RESET << endl;
+						for(auto & i : procList)
+		   			{
+							if (!i.isDone)
+							{
+								cout << MAGENTA << setw(6) << i.id.substr(0, 6) << " | ";
+								cout << setw(3) << i.startTime << "   | ";
+								cout << setw(8) << i.timeScheduled << "        | ";
+								cout << setw(6) << i.totalTimeNeeded << "       | " << RESET << endl;
+							}
+						}
+					}
+					else
+						cout << RED << "NO PROCESSES RUNNING" << RESET << endl;
+				}
+				else
+					cout << RED << "NO ACTION REQUIRED" << RESET << endl;
+	   		break;
+	   	}
+
+			case e_kill:
+	    {
+				if (action_1 != "")
+	   		{
+				}
+				else
+					cout << RED << "NO ACTION" << RESET << endl;
+	   		break;
+	   	}
+
+			case e_schedHist:
+	    {
+				if (action_1 == "")
+	   		{
+				}
+				else
+					cout << RED << "NO ACTION REQUIRED" << RESET << endl;
+	   		break;
+	   	}
+
 	    case e_empty:
 	      break;
     }
@@ -1170,11 +1336,3 @@ int main()
 
 	return 0;
 }
-
-
-
-
-
-
-
-

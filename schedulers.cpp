@@ -130,4 +130,3 @@ int HRRN(const int& curTime, const vector<Process>& procList)
 
 	return idx;
 }
-

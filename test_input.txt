@@ -1,0 +1,27 @@
+groupadd Student
+groupadd Prof
+useradd -G Prof,Student jw
+usermod -g Prof jw
+useradd -G Student joeSchmoe
+usermod -g Student joeSchmoe
+touch Welcome.txt
+chmod 704 Welcome.txt
+chuser jw
+mkdir homework
+chmod 775 homework
+mkdir solutions
+chmod 770 solutions
+chuser joeSchmoe
+cd solutions
+chmod 777 solutions
+cd homework
+touch jsHomework.cpp
+
+chuser ROOT_USER
+users
+cd
+ls -l
+cd homework
+ls -l
+
+exit

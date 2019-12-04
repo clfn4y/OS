@@ -1,0 +1,11 @@
+groupadd Student
+useradd -G Student david
+usermod -g Student david
+useradd caleb
+
+chuser david
+touch file
+chuser caleb
+run file
+
+exit
