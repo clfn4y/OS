@@ -363,10 +363,12 @@ void delete_group(string name, Folders* index)
 }
 
 Process p1;
+vector<Process> procList;
+vector<pair<int, string>> schedHistList;
+pair<int, string> curSched;
 
 int curTime = 0;
 int procIdx;
-vector<Process> procList;
 
 void fake_sched()
 {
@@ -376,6 +378,10 @@ void fake_sched()
 		//if we were given a valid process index
 		if(procIdx >= 0 && procIdx < procList.size())
 		{
+			curSched.first = curTime;
+			curSched.second = procList[procIdx].id;
+			schedHistList.push_back(curSched);
+
 				//update the details for the scheduled process
 				++procList[procIdx].timeScheduled;
 				if(procList[procIdx].totalTimeNeeded == procList[procIdx].timeScheduled)
@@ -442,8 +448,8 @@ int main()
 	{
 		// Location and getting input
 		path = path_func(current_directory);
-		// cout << path;
-		cout << path << endl;
+		cout << path;
+		// cout << path << endl;
 		getline(cin, input);
 
 		space = 0;
@@ -1260,6 +1266,7 @@ int main()
 								p1.id = i.file_name;
 								p1.startTime = curTime;
 								p1.totalTimeNeeded = i.total_time;
+								p1.owner = i.owner->user_name;
 								procList.push_back(p1);
 							}
 							else
@@ -1288,12 +1295,12 @@ int main()
 					}
 					if (flag)
 					{
-						cout << MAGENTA << "ProcID | Start | Total Scheduled | Total Needed |" << RESET << endl;
+						cout << MAGENTA << "| ProcID | Start | Total Scheduled | Total Needed |" << RESET << endl;
 						for(auto & i : procList)
 		   			{
 							if (!i.isDone)
 							{
-								cout << MAGENTA << setw(6) << i.id.substr(0, 6) << " | ";
+								cout << MAGENTA << "| " << setw(6) << i.id.substr(0, 6) << " | ";
 								cout << setw(3) << i.startTime << "   | ";
 								cout << setw(8) << i.timeScheduled << "        | ";
 								cout << setw(6) << i.totalTimeNeeded << "       | " << RESET << endl;
@@ -1310,8 +1317,24 @@ int main()
 
 			case e_kill:
 	    {
+				bool found = false;
 				if (action_1 != "")
 	   		{
+					for(auto & i : procList)
+	   			{
+						if (i.id == action_1 && !i.isDone)
+						{
+							found = true;
+							if (i.owner == active_user->user_name)
+							{
+								procList.erase(remove_if(procList.begin(), procList.end(), [&](Process const & proc){return proc.id == action_1;}), procList.end());
+							}
+							else
+								cout << RED << "NOT OWNER" << RESET << endl;
+						}
+					}
+					if (!found)
+						cout << RED << "NO RUNNING PROCESS FOUND" << RESET << endl;
 				}
 				else
 					cout << RED << "NO ACTION" << RESET << endl;
@@ -1322,6 +1345,17 @@ int main()
 	    {
 				if (action_1 == "")
 	   		{
+					if (!schedHistList.empty())
+					{
+						cout << MAGENTA << "| Time Step | ProcID |" << RESET << endl;
+						for(auto & i : schedHistList)
+						{
+							cout << MAGENTA << "| " << setw(4) << i.first << "      | ";
+							cout << setw(6) << i.second.substr(0, 6) << " | " << RESET << endl;
+						}
+					}
+					else
+					cout << RED << "NO HISTORY" << RESET << endl;
 				}
 				else
 					cout << RED << "NO ACTION REQUIRED" << RESET << endl;

@@ -16,6 +16,7 @@ struct Process
     string id;            //The process id
     int startTime;        //The time at which the process becomes available for scheduling
     int totalTimeNeeded;  //The total amount of time needed by the process
+    string owner;
 
     // Process details
     bool isDone;          //Indicates if the process is complete
