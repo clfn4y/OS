@@ -367,12 +367,13 @@ vector<Process> procList;
 vector<pair<int, string>> schedHistList;
 pair<int, string> curSched;
 
+bool running = true;
 int curTime = 0;
 int procIdx;
 
 void fake_sched()
 {
-	while (true)
+	while (running)
 	{
 		procIdx = HRRN(curTime, procList);
 		//if we were given a valid process index
@@ -438,7 +439,6 @@ int main()
 	string action_4 = "";
 	string action_5 = "";
 	int space = 0;
-	bool running = true;
 	Folders* current_directory;
 
 	current_directory = ROOT.get_folder();
@@ -485,6 +485,7 @@ int main()
 	      break;
 	    case e_exit:
     		running = false;
+    		t2.join();
 	      break;
 	    case e_ls:
 	    {
